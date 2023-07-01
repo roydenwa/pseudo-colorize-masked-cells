@@ -288,10 +288,10 @@ def upsample_block(in_channels, out_channels, add_3x3_convs: bool = False):
             nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
             nn.ReLU(),
             nn.Upsample(scale_factor=2, mode="bilinear"),
-            nn.Conv2d(in_channels=out_channels, out_channels=out_channels, kernel_size=3),
+            nn.Conv2d(in_channels=out_channels, out_channels=out_channels, kernel_size=3, padding="same"),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(),
-            nn.Conv2d(in_channels=out_channels, out_channels=out_channels, kernel_size=3),
+            nn.Conv2d(in_channels=out_channels, out_channels=out_channels, kernel_size=3, padding="same"),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(),
         )

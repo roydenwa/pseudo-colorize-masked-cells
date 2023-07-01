@@ -86,6 +86,7 @@ class CCFViT(pl.LightningModule):
     def forward(self, x):
         if self.backbone_eval:
             with torch.no_grad():
+                self.backbone.eval()
                 x = self.context_block(x)
                 tokens, _, _ = self.backbone(x)
         else:

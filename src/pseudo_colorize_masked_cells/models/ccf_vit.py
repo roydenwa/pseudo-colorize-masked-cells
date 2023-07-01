@@ -30,6 +30,7 @@ class CCFViT(pl.LightningModule):
         decoder_mlp_dim=1024,
         backbone_eval=False,
         heads_add_3x3_convs=False,
+        neck_dual_conv=False,
     ):
         super().__init__()
         self.context_block = ContextBlock()
@@ -42,7 +43,9 @@ class CCFViT(pl.LightningModule):
             heads=heads_backbone,
             mlp_dim=mlp_dim_backbone,
         )
-        self.neck = neck(in_channels=dim_backbone, out_channels=256)
+        self.neck = neck(
+            in_channels=dim_backbone, out_channels=256, dual_conv=neck_dual_conv
+        )
         self.heatmap_head = nn.Sequential(
             # upsample_block(256, 256), # TODO: Make num upsample blocks dynamic based on patch_size_backbone
             upsample_block(256, 256, heads_add_3x3_convs),
@@ -225,62 +228,104 @@ def neck(
     mlp_dim=1024,
     num_backbone_patch_rows=48,
     num_backbone_patch_cols=48,
+    dual_conv=False,
 ):
-    return nn.Sequential(
-        Rearrange(
-            "b patch_row patch_col c -> b c patch_row patch_col"
-        ),
-        nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
-        MobileViTBlock(
-            dim=out_channels,
-            depth=depth,
-            channel=out_channels,
-            kernel_size=kernel_size,
-            patch_size=patch_size,
-            mlp_dim=mlp_dim,
-        ),
-        nn.Conv2d(
-            in_channels=out_channels,
-            out_channels=out_channels,
-            kernel_size=kernel_size,
-            padding="same",
-        ),
-        nn.LayerNorm([out_channels, num_backbone_patch_cols, num_backbone_patch_rows]),
-        nn.Conv2d(
-            in_channels=out_channels,
-            out_channels=out_channels,
-            kernel_size=kernel_size,
-            padding="same",
-        ),
-        nn.LayerNorm([out_channels, num_backbone_patch_cols, num_backbone_patch_rows]),
-        nn.Upsample(scale_factor=2, mode="bilinear"),
-        MobileViTBlock(
-            dim=out_channels,
-            depth=depth,
-            channel=out_channels,
-            kernel_size=kernel_size,
-            patch_size=patch_size,
-            mlp_dim=mlp_dim,
-        ),
-        nn.Conv2d(
-            in_channels=out_channels,
-            out_channels=out_channels,
-            kernel_size=kernel_size,
-            padding="same",
-        ),
-        nn.LayerNorm(
-            [out_channels, 2 * num_backbone_patch_cols, 2 * num_backbone_patch_rows]
-        ),
-        nn.Conv2d(
-            in_channels=out_channels,
-            out_channels=out_channels,
-            kernel_size=kernel_size,
-            padding="same",
-        ),
-        nn.LayerNorm(
-            [out_channels, 2 * num_backbone_patch_cols, 2 * num_backbone_patch_rows]
-        ),
-    )
+    if dual_conv:
+        return nn.Sequential(
+            Rearrange(
+                "b patch_row patch_col c -> b c patch_row patch_col"
+            ),
+            nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
+            MobileViTBlock(
+                dim=out_channels,
+                depth=depth,
+                channel=out_channels,
+                kernel_size=kernel_size,
+                patch_size=patch_size,
+                mlp_dim=mlp_dim,
+            ),
+            nn.Conv2d(
+                in_channels=out_channels,
+                out_channels=out_channels,
+                kernel_size=kernel_size,
+                padding="same",
+            ),
+            nn.LayerNorm([out_channels, num_backbone_patch_cols, num_backbone_patch_rows]),
+            nn.Conv2d(
+                in_channels=out_channels,
+                out_channels=out_channels,
+                kernel_size=kernel_size,
+                padding="same",
+            ),
+            nn.LayerNorm([out_channels, num_backbone_patch_cols, num_backbone_patch_rows]),
+            nn.Upsample(scale_factor=2, mode="bilinear"),
+            MobileViTBlock(
+                dim=out_channels,
+                depth=depth,
+                channel=out_channels,
+                kernel_size=kernel_size,
+                patch_size=patch_size,
+                mlp_dim=mlp_dim,
+            ),
+            nn.Conv2d(
+                in_channels=out_channels,
+                out_channels=out_channels,
+                kernel_size=kernel_size,
+                padding="same",
+            ),
+            nn.LayerNorm(
+                [out_channels, 2 * num_backbone_patch_cols, 2 * num_backbone_patch_rows]
+            ),
+            nn.Conv2d(
+                in_channels=out_channels,
+                out_channels=out_channels,
+                kernel_size=kernel_size,
+                padding="same",
+            ),
+            nn.LayerNorm(
+                [out_channels, 2 * num_backbone_patch_cols, 2 * num_backbone_patch_rows]
+            ),
+        )
+    else:
+        return nn.Sequential(
+            Rearrange(
+                "b patch_row patch_col c -> b c patch_row patch_col"
+            ),
+            nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
+            MobileViTBlock(
+                dim=out_channels,
+                depth=depth,
+                channel=out_channels,
+                kernel_size=kernel_size,
+                patch_size=patch_size,
+                mlp_dim=mlp_dim,
+            ),
+            nn.Conv2d(
+                in_channels=out_channels,
+                out_channels=out_channels,
+                kernel_size=kernel_size,
+                padding="same",
+            ),
+            nn.LayerNorm([out_channels, num_backbone_patch_cols, num_backbone_patch_rows]),
+            nn.Upsample(scale_factor=2, mode="bilinear"),
+            MobileViTBlock(
+                dim=out_channels,
+                depth=depth,
+                channel=out_channels,
+                kernel_size=kernel_size,
+                patch_size=patch_size,
+                mlp_dim=mlp_dim,
+            ),
+            nn.Conv2d(
+                in_channels=out_channels,
+                out_channels=out_channels,
+                kernel_size=kernel_size,
+                padding="same",
+            ),
+            nn.LayerNorm(
+                [out_channels, 2 * num_backbone_patch_cols, 2 * num_backbone_patch_rows]
+            ),
+        ) 
 
 
 def upsample_block(in_channels, out_channels, add_3x3_convs: bool = False):

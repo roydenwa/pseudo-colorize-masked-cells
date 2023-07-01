@@ -244,6 +244,13 @@ def neck(
             padding="same",
         ),
         nn.LayerNorm([out_channels, num_backbone_patch_cols, num_backbone_patch_rows]),
+        nn.Conv2d(
+            in_channels=out_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            padding="same",
+        ),
+        nn.LayerNorm([out_channels, num_backbone_patch_cols, num_backbone_patch_rows]),
         nn.Upsample(scale_factor=2, mode="bilinear"),
         MobileViTBlock(
             dim=out_channels,
@@ -252,6 +259,15 @@ def neck(
             kernel_size=kernel_size,
             patch_size=patch_size,
             mlp_dim=mlp_dim,
+        ),
+        nn.Conv2d(
+            in_channels=out_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            padding="same",
+        ),
+        nn.LayerNorm(
+            [out_channels, 2 * num_backbone_patch_cols, 2 * num_backbone_patch_rows]
         ),
         nn.Conv2d(
             in_channels=out_channels,

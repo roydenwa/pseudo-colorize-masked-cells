@@ -227,7 +227,7 @@ def neck(
 ):
     return nn.Sequential(
         Rearrange(
-            "b (h w) d -> b d h w", h=num_backbone_patch_cols, w=num_backbone_patch_rows
+            "b patch_row patch_col c -> b c patch_row patch_col"
         ),
         nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
         MobileViTBlock(

@@ -29,6 +29,7 @@ class CCFViT(pl.LightningModule):
         decoder_heads=8,
         decoder_mlp_dim=1024,
         backbone_eval=False,
+        heads_add_3x3_convs=False,
     ):
         super().__init__()
         self.context_block = ContextBlock()
@@ -44,14 +45,14 @@ class CCFViT(pl.LightningModule):
         self.neck = neck(in_channels=dim_backbone, out_channels=256)
         self.heatmap_head = nn.Sequential(
             # upsample_block(256, 256), # TODO: Make num upsample blocks dynamic based on patch_size_backbone
-            upsample_block(256, 256),
-            upsample_block(256, 256),
+            upsample_block(256, 256, heads_add_3x3_convs),
+            upsample_block(256, 256, heads_add_3x3_convs),
             nn.Conv2d(256, 1, kernel_size=1),
         )
         self.hw_head = nn.Sequential(
             # upsample_block(256, 256),
-            upsample_block(256, 256),
-            upsample_block(256, 256),
+            upsample_block(256, 256, heads_add_3x3_convs),
+            upsample_block(256, 256, heads_add_3x3_convs),
             nn.Conv2d(256, 2, kernel_size=1),
         )
         self.lr = lr
@@ -281,12 +282,25 @@ def neck(
     )
 
 
-def upsample_block(in_channels, out_channels):
-    return nn.Sequential(
-        nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
-        nn.ReLU(),
-        nn.Upsample(scale_factor=2, mode="bilinear"),
-    )
+def upsample_block(in_channels, out_channels, add_3x3_convs: bool = False):
+    if add_3x3_convs:
+        return nn.Sequential(
+            nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode="bilinear"),
+            nn.Conv2d(in_channels=out_channels, out_channels=out_channels, kernel_size=3),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(),
+            nn.Conv2d(in_channels=out_channels, out_channels=out_channels, kernel_size=3),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(),
+        )
+    else:
+        return nn.Sequential(
+            nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode="bilinear"),
+        )
 
 
 class ContextBlock(nn.Module):

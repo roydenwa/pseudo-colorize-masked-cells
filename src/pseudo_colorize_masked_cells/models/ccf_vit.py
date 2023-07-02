@@ -241,10 +241,10 @@ def neck(
 ):
     if dual_conv:
         return nn.Sequential(
-            Rearrange(
-                "b patch_row patch_col c -> b c patch_row patch_col"
+            Rearrange("b patch_row patch_col c -> b c patch_row patch_col"),
+            nn.Conv2d(
+                in_channels=in_channels, out_channels=out_channels, kernel_size=1
             ),
-            nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
             MobileViTBlock(
                 dim=out_channels,
                 depth=depth,
@@ -259,14 +259,18 @@ def neck(
                 kernel_size=kernel_size,
                 padding="same",
             ),
-            nn.LayerNorm([out_channels, num_backbone_patch_cols, num_backbone_patch_rows]),
+            nn.LayerNorm(
+                [out_channels, num_backbone_patch_cols, num_backbone_patch_rows]
+            ),
             nn.Conv2d(
                 in_channels=out_channels,
                 out_channels=out_channels,
                 kernel_size=kernel_size,
                 padding="same",
             ),
-            nn.LayerNorm([out_channels, num_backbone_patch_cols, num_backbone_patch_rows]),
+            nn.LayerNorm(
+                [out_channels, num_backbone_patch_cols, num_backbone_patch_rows]
+            ),
             nn.Upsample(scale_factor=2, mode="bilinear"),
             MobileViTBlock(
                 dim=out_channels,
@@ -297,10 +301,10 @@ def neck(
         )
     else:
         return nn.Sequential(
-            Rearrange(
-                "b patch_row patch_col c -> b c patch_row patch_col"
+            Rearrange("b patch_row patch_col c -> b c patch_row patch_col"),
+            nn.Conv2d(
+                in_channels=in_channels, out_channels=out_channels, kernel_size=1
             ),
-            nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
             MobileViTBlock(
                 dim=out_channels,
                 depth=depth,
@@ -315,7 +319,9 @@ def neck(
                 kernel_size=kernel_size,
                 padding="same",
             ),
-            nn.LayerNorm([out_channels, num_backbone_patch_cols, num_backbone_patch_rows]),
+            nn.LayerNorm(
+                [out_channels, num_backbone_patch_cols, num_backbone_patch_rows]
+            ),
             nn.Upsample(scale_factor=2, mode="bilinear"),
             MobileViTBlock(
                 dim=out_channels,
@@ -334,25 +340,39 @@ def neck(
             nn.LayerNorm(
                 [out_channels, 2 * num_backbone_patch_cols, 2 * num_backbone_patch_rows]
             ),
-        ) 
+        )
 
 
 def upsample_block(in_channels, out_channels, add_3x3_convs: bool = False):
     if add_3x3_convs:
         return nn.Sequential(
-            nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
+            nn.Conv2d(
+                in_channels=in_channels, out_channels=out_channels, kernel_size=1
+            ),
             nn.ReLU(),
             nn.Upsample(scale_factor=2, mode="bilinear"),
-            nn.Conv2d(in_channels=out_channels, out_channels=out_channels, kernel_size=3, padding="same"),
+            nn.Conv2d(
+                in_channels=out_channels,
+                out_channels=out_channels,
+                kernel_size=3,
+                padding="same",
+            ),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(),
-            nn.Conv2d(in_channels=out_channels, out_channels=out_channels, kernel_size=3, padding="same"),
+            nn.Conv2d(
+                in_channels=out_channels,
+                out_channels=out_channels,
+                kernel_size=3,
+                padding="same",
+            ),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(),
         )
     else:
         return nn.Sequential(
-            nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
+            nn.Conv2d(
+                in_channels=in_channels, out_channels=out_channels, kernel_size=1
+            ),
             nn.ReLU(),
             nn.Upsample(scale_factor=2, mode="bilinear"),
         )

@@ -33,6 +33,7 @@ class CCFViT(pl.LightningModule):
         neck_dual_conv=False,
         neck_dim=256,
         head_channels=256,
+        heads_add_activation=False,
     ):
         super().__init__()
         self.context_block = ContextBlock()
@@ -88,6 +89,8 @@ class CCFViT(pl.LightningModule):
             )  # pcolor img w/ 3 channels
             self.to_pixels_aux = nn.Linear(decoder_dim, pixel_values_per_patch)
 
+        self.heads_add_activation = heads_add_activation
+
     def forward(self, x):
         if self.backbone_eval:
             with torch.no_grad():
@@ -102,6 +105,10 @@ class CCFViT(pl.LightningModule):
         x = self.neck(_tokens)
         heatmap = self.heatmap_head(x)
         hw = self.hw_head(x)
+
+        if self.heads_add_activation:
+            heatmap = F.sigmoid(heatmap)
+            hw = F.relu(hw)
 
         if not self.aux_pcolor:
             return heatmap, self.chw_to_hwc(hw)

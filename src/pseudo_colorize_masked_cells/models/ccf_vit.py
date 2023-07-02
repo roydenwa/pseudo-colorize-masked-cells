@@ -31,6 +31,7 @@ class CCFViT(pl.LightningModule):
         backbone_eval=False,
         heads_add_3x3_convs=False,
         neck_dual_conv=False,
+        neck_dim=256,
     ):
         super().__init__()
         self.context_block = ContextBlock()
@@ -44,7 +45,7 @@ class CCFViT(pl.LightningModule):
             mlp_dim=mlp_dim_backbone,
         )
         self.neck = neck(
-            in_channels=dim_backbone, out_channels=256, dual_conv=neck_dual_conv
+            in_channels=dim_backbone, out_channels=neck_dim, dual_conv=neck_dual_conv
         )
         self.heatmap_head = nn.Sequential(
             # upsample_block(256, 256), # TODO: Make num upsample blocks dynamic based on patch_size_backbone

@@ -49,13 +49,13 @@ class CCFViT(pl.LightningModule):
         )
         self.heatmap_head = nn.Sequential(
             # upsample_block(256, 256), # TODO: Make num upsample blocks dynamic based on patch_size_backbone
-            upsample_block(256, 256, heads_add_3x3_convs),
+            upsample_block(neck_dim, 256, heads_add_3x3_convs),
             upsample_block(256, 256, heads_add_3x3_convs),
             nn.Conv2d(256, 1, kernel_size=1),
         )
         self.hw_head = nn.Sequential(
             # upsample_block(256, 256),
-            upsample_block(256, 256, heads_add_3x3_convs),
+            upsample_block(neck_dim, 256, heads_add_3x3_convs),
             upsample_block(256, 256, heads_add_3x3_convs),
             nn.Conv2d(256, 2, kernel_size=1),
         )

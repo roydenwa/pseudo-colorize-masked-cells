@@ -4,6 +4,12 @@ TL;DR: Self-supervised pre-training method for cell detection, which combines ma
 ## Getting started
 Coming soon...
 
+## Fine-tuning on cell detection
+
+![Alt Text](detection.gif)
+
+Input fluorescence microscopy video, predicted centroid heatmaps, and detections (predicted bboxes in green, gt bboxes in red)
+
 ## TensorFlow implementation
 This [repo](https://github.com/roydenwa/cell-centroid-former) contains the code for our CellCentroidFormer model with an EfficientNet backbone.
 

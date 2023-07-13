@@ -77,18 +77,8 @@ class PcolorMAE(MAE, pl.LightningModule):
         # calculate reconstruction loss
         recon_loss = F.mse_loss(pred_pixel_values, masked_pcolor_patches)
         ssim_score = structural_similarity_index_measure(
-            pred_pixel_values.view(
-                -1,
-                3,
-                int(self.encoder.image_size * (1 - self.masking_ratio)),
-                int(self.encoder.image_size * (1 - self.masking_ratio)),
-            ),
-            masked_pcolor_patches.view(
-                -1,
-                3,
-                int(self.encoder.image_size * (1 - self.masking_ratio)),
-                int(self.encoder.image_size * (1 - self.masking_ratio)),
-            ),
+            pred_pixel_values[None, :],
+            masked_pcolor_patches[None, :],
         )
 
         return recon_loss, ssim_score

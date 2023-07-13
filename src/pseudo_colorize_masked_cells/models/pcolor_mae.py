@@ -2,8 +2,8 @@ import torch
 import pytorch_lightning as pl
 import torch.nn.functional as F
 
-from einops import repeat
 from vit_pytorch import MAE
+from einops import repeat, rearrange
 from torchmetrics.functional import structural_similarity_index_measure
 
 from .ccf_vit import ContextBlock
@@ -81,10 +81,20 @@ class PcolorMAE(MAE, pl.LightningModule):
             masked_pcolor_patches[None, :],
         )
 
-        return recon_loss, ssim_score
+        pcolor_patches[batch_range, masked_indices] = pred_pixel_values
+
+        recon_img = rearrange(
+            pcolor_patches, "b (h w) (p1 p2 c) -> b c (h p1) (w p2)", 
+            p1=self.encoder.patch_size, 
+            p2=self.encoder.pacth_size, 
+            h=self.encoder.image_size//self.encoder.patch_size, 
+            w=self.encoder.image_size//self.encoder.patch_size,
+        )
+
+        return recon_loss, ssim_score, recon_img
 
     def training_step(self, batch, batch_idx):
-        loss, ssim_score = self.forward(
+        loss, ssim_score, *_ = self.forward(
             batch["img"], batch["pcolor_img"].view(-1, 3, 384, 384)
         )
 
@@ -94,7 +104,7 @@ class PcolorMAE(MAE, pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss, ssim_score = self.forward(
+        loss, ssim_score, *_ = self.forward(
             batch["img"], batch["pcolor_img"].view(-1, 3, 384, 384)
         )
 

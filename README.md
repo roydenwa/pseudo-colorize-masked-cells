@@ -8,7 +8,7 @@ Coming soon...
 
 ![Pre-training](pre-training.gif)
 
-Masking ratio: 0.33, colormap: nipy_spectral
+Masking ratio: 0.33, pre-training target: fluorescence microscopy video pseudo-colorized with the nipy_spectral colormap
 
 ## Fine-tuning on cell detection
 
